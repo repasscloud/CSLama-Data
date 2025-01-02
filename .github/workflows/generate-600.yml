@@ -1,0 +1,89 @@
+name: "Process CSLama-600 ML Model"
+
+on:
+  workflow_dispatch: # Trigger manually
+
+env:
+  TRAIN_TIME: "600"
+
+jobs:
+  process-latest-release:
+    name: "Process Latest Release"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      # Step 1: Checkout repository
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      # Step 2: Execute the script to process the release
+      - name: Execute
+        run: |
+          chmod +x ./get_latest_release.sh
+          ./get_latest_release.sh
+        shell: bash
+
+      # Step 3: Setup .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Step 4: Install ML.NET CLI
+      - name: Install ML.NET CLI
+        run: dotnet tool install -g mlnet-linux-x64
+
+      # Step 5: Train the model with matrix train time
+      - name: Train your model
+        run: |
+          todayDate=$(date +"%Y-%m-%d")
+          file="processed/combined.txt"
+          outputDir="$(pwd)/$todayDate"
+          header="Classification	User_Input" # Use an actual tab here
+
+          mkdir -p "$outputDir"
+
+          # Check if the file exists
+          if [ -f "$file" ]; then
+            # Check if the first line matches the header
+            if [ "$(head -n 1 "$file")" != "$header" ]; then
+              # Insert the header at the top of the file
+              sed -i "1i $header" "$file"
+            fi
+          else
+            echo "File '$file' does not exist!"
+            exit 1
+          fi
+          mlnet classification --dataset "processed/combined.txt" --label-col "Classification" --has-header true --name "SM_${{ env.TRAIN_TIME }}_$todayDate" --train-time ${{ env.TRAIN_TIME }} --output "$outputDir/SM_${{ env.TRAIN_TIME }}_$todayDate"
+
+      - name: Clean up files
+        run: |
+          processedDir="$(pwd)/processed"
+          unzippedDir="$(pwd)/unzipped"
+          if [ -d "$processedDir" ]; then
+            rm -rf "$processedDir"
+          fi
+          if [ -d "$unzippedDir" ]; then
+            rm -rf "$unzippedDir"
+          fi
+          if [ -f debug_latest_release.html ]; then
+            rm -rf debug_latest_release.html
+          fi
+          if [ -f *.zip ]; then
+            rm -rf *.zip
+          fi
+
+      - name: Configure Git
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+    
+      - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: always()
+        run: |
+          git add .
+          git commit -m "Automated update" || echo "No changes to commit"
+          git push || echo "No changes to push"

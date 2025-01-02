@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # Trigger manually
 
 env:
-  TRAIN_TIME: "600"
+  TRAINTIME: "600"
 
 jobs:
   process-latest-release:
@@ -38,7 +38,7 @@ jobs:
         run: |
           todayDate=$(date +"%Y-%m-%d")
           file="processed/combined.txt"
-          outputDir="$(pwd)/$todayDate"
+          outputDir="$(pwd)/$todayDate/${{ env.TRAINTIME }}"
           header="Classification	User_Input" # Use an actual tab here
 
           mkdir -p "$outputDir"
@@ -54,7 +54,7 @@ jobs:
             echo "File '$file' does not exist!"
             exit 1
           fi
-          mlnet classification --dataset "processed/combined.txt" --label-col "Classification" --has-header true --name "SM_${{ env.TRAIN_TIME }}_$todayDate" --train-time ${{ env.TRAIN_TIME }} --output "$outputDir/SM_${{ env.TRAIN_TIME }}_$todayDate"
+          mlnet classification --dataset "processed/combined.txt" --label-col "Classification" --has-header true --name "SM_${{ env.TRAINTIME }} --train-time ${{ env.TRAINTIME }} --output "$outputDir" --verbosity diag
 
       - name: Clean up files
         run: |

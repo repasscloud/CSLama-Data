@@ -1,10 +1,12 @@
 name: "Process CSLama-3600 ML Model"
 
 on:
+  schedule:
+    - cron: '5 6 5 * *'
   workflow_dispatch: # Trigger manually
 
 env:
-  TRAIN_TIME: "3600"
+  TRAINTIME: "3600"
 
 jobs:
   process-latest-release:
@@ -54,7 +56,16 @@ jobs:
             echo "File '$file' does not exist!"
             exit 1
           fi
-          mlnet classification --dataset "processed/combined.txt" --label-col "Classification" --has-header true --name "SM_${{ env.TRAIN_TIME }}_$todayDate" --train-time ${{ env.TRAIN_TIME }} --output "$outputDir/SM_${{ env.TRAIN_TIME }}_$todayDate"
+          
+          # Train the model
+          mlnet classification \
+            --dataset "processed/combined.txt" \
+            --label-col "Classification" \
+            --has-header true \
+            --name "SM_${{ env.TRAINTIME }}" \
+            --train-time "${{ env.TRAINTIME }}" \
+            --output "$outputDir" \
+            --verbosity diag
 
       - name: Clean up files
         run: |

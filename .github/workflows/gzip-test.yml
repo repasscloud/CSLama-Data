@@ -1,0 +1,30 @@
+name: "GZip Test"
+
+on:
+  workflow_dispatch: # Trigger manually
+
+env:
+  TRAINTIME: "600"
+
+jobs:
+  gzip-test:
+    name: "GZip Test"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      # Step 1: Checkout repository
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: Create tar.gz archive
+        run: |
+          todayDate=$(date +"%Y-%m-%d")
+          folder_to_tar="$(pwd)/$todayDate/SM_600"
+          tar_file="$(pwd)/SM_600-$todayDate.tar.gz"
+          if [ -d "$folder_to_tar" ]; then
+            tar -czf "$tar_file" -C "$(dirname "$folder_to_tar")" "$(basename "$folder_to_tar")"
+            echo "tar.gz archive created at: $tar_file"
+          else
+            echo "Folder $folder_to_tar does not exist!"
+            exit 1
+          fi

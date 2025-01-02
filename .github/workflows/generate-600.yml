@@ -54,7 +54,16 @@ jobs:
             echo "File '$file' does not exist!"
             exit 1
           fi
-          mlnet classification --dataset "processed/combined.txt" --label-col "Classification" --has-header true --name "SM_${{ env.TRAINTIME }} --train-time ${{ env.TRAINTIME }} --output "$outputDir" --verbosity diag
+          
+          # Train the model
+          mlnet classification \
+            --dataset "processed/combined.txt" \
+            --label-col "Classification" \
+            --has-header true \
+            --name "SM_${{ env.TRAINTIME }}" \
+            --train-time "${{ env.TRAINTIME }}" \
+            --output "$outputDir" \
+            --verbosity diag
 
       - name: Clean up files
         run: |
